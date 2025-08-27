@@ -1,16 +1,16 @@
 # Autonomous-Damage-Assessment-Drone
 # Author Introduction
-Hi there! I'm a Civil Engineering student particularly interested in Advanced Structural Design and Analysis. I enjoy playing in the field between Civil and Mechanical Engineering, whether it is personal projects or internship experience. 
+Hi there! I'm a Civil Engineering student particularly interested in Advanced Structural Design and Analysis. I enjoy playing in the field between Civil and Mechanical Engineering!
 
-# Quick Project Notes
+# A. Quick Project Notes
 This is a project that I contributed to in my 2nd year of University. I was a part of a research group that combined AI & ML principles with Structural Engineering. One of my key contributions was to the development and testing of a Semi-Autonomous Micro Aerial Vehicle (MAV) that aimed to identify structural damage in columns. 
 
 <img width="1010" height="622" alt="image" src="https://github.com/user-attachments/assets/e9260e06-1209-46f5-a442-7ec4186c828e" />
 
-# Disclaimer
-Please note: This repository serves to showcase the research work and design of the Semi-Autonomous MAV. As such, I am unable to show the original code used for the MAV, but have included snippets of example code that servces the same concept and/or purpose. Please contact the authors for inquiries regarding implementation details.
+# B. Disclaimer
+Please note: This repository serves to showcase the research work and design of the Semi-Autonomous MAV. As such, I am unable to show the original code used for the MAV or the process of modifying the drone, but have included snippets of example code that serves the same concept and/or purpose. Please contact the authors for inquiries regarding implementation details.
 
-# Overview
+# C. Overview
 This project presents a novel, semi-autonomous pipeline for the rapid post-earthquake inspection of reinforced concrete (RC) columns using a custom-equipped, low-cost Micro Aerial Vehicle (MAV). The system helps automate structura damage assessment by combining real-time column detection, multi-view image acquisition, and computer vision for damage assessment. It aims to go beyond the limitations of single-viewpoint inspections.
 Key Features
 1) Semi-Autonomous Navigation: The MAV operates in manual mode for global navigation and switches to an autopilot mode upon detecting a column for localized inspection.
@@ -19,7 +19,7 @@ Key Features
 4) Vision-Based Damage Detection: Utilizes pre-trained deep learning models (YOLOv2 and DeepLabv3+) to detect critical damage types—concrete spalling and exposed steel reinforcement—in real-time from the captured images.
 5) Data Fusion for Assessment: The final damage state of a column is determined by fusing results from all captured viewpoints, adopting a worst-case scenario approach for a more accurate and reliable assessment than single-image methods.
 
-# Hardware: Bill of Materials (BOM)
+# D. Hardware: Bill of Materials (BOM)
 This table lists the core components used to create the custom obstacle avoidance and ranging module.
 | Component | Key Notes |
 | --------- | --------- |
@@ -31,7 +31,7 @@ This table lists the core components used to create the custom obstacle avoidanc
 | 5V Voltage Regulator | Steps down battery voltage to a stable 5V for components |
 | Rechargeable Li-Po Battery | Independent power source for the sensor module |
 
-# Software & Design Tools
+# E. Software & Design Tools
 | Category | Software | Usage | 
 | --------- | --------- | --------- |
 Drone Control & SDK	| Parrot Olympe (Python SDK)	| Programmatic control of the Parrot Anafi drone (flight, camera, etc.).
@@ -39,7 +39,7 @@ Computer Vision	| Python, OpenCV, YOLOv2, DeepLabv3+	| Real-time column detectio
 Data Processing & Fusion | Python	| Main logic for autonomy, sensor data integration, and multi-view result fusion.
 Sensor Communication | MicroPython or C++ (Arduino Core)	| Firmware for the ESP32 to read sensors and send data via Wi-Fi.
 
-# PCB & Hardware Design: A Pragmatic Approach
+# F. PCB & Hardware Design: A Pragmatic Approach
 The goal wasn't to reinvent the wheel, but to create a **robust**, **lightweight**, and **low-cost** module that would give our commercial Parrot Anafi the "senses" it needed for indoor autonomy. The drone's own sensors are great for outdoor flight, but not for precise, close-quarters inspection. Here is the step-by-step design logic, traceable to the paper.
 
 1. Defining the Sensory Requirements
@@ -78,7 +78,7 @@ We utilized a Commercial-Off-The-Shelf product (Anafi), identify its sensory sho
 <img width="749" height="803" alt="image" src="https://github.com/user-attachments/assets/0c98731b-ab58-4ee0-b4d0-5f4b807e6667" />
 
 
-# System Architecture & Workflow
+# G. System Architecture & Workflow
 1) Manual Pilot & Real-Time Streaming: An operator manually flies the MAV through an indoor environment. The MAV streams live video feed to a local PC.
 2) Vision-Based Column Detection: A computer vision algorithm processes the live stream to detect structural columns. Upon detection, the system triggers the autopilot mode.
 3) Autonomous Data Collection:
@@ -90,15 +90,29 @@ The MAV approaches the column until it fills a significant portion of the camera
 5) Multi-View Data Fusion: Results from all angles are aggregated. The most severe damage identified across all views defines the overall damage state of the column.
 6) Return to Manual Control: After a 360° scan or completion of the path, the MAV returns control to the operator to navigate to the next column.
 
-# Dataset Curation & Preparation
-A significant part of my contribution to this project involved the initial stages of data acquisition and preparation, which is the critical first step for any successful machine learning application. While the final system used pre-trained models for real-time detection, the process of gathering and preparing the raw data was essential for validating our approach.
+# H. Dataset Curation & Preparation
+A significant part of my contribution to this project was in stages of data acquisition and preparation, which is the critical first step for any successful  ML application. While the final system used pre-trained models for real-time detection, the process of gathering and preparing the raw data was essential for validating our approach.
 
 **Multi-View Data Acquisition:**
 I manually captured a large set of images and videos of reinforced concrete (RC) columns in our structural laboratory.
 Understanding the limitation of single-viewpoint inspection, I specifically captured data from multiple angles and viewpoints for each column, ensuring comprehensive coverage of all visible surfaces. I sampled 5-7 different concrete columns, and took about 8-9 videos (about 1 minute each, spiraling up and down the columns) and about 200 photos for each one. 
-This included capturing both damaged columns (featuring spalling and exposed rebar) and undamaged ones to provide the models with examples of various conditions.
+This included capturing both damaged columns (featuring spalling and exposed rebar) and undamaged ones to provide the models with examples of various conditions. 
 
-**Building a Structured Database:**
+# H1. A Sidebar: 3D Reconstruction
+The multi-view image collection pipeline developed in this project was designed as the critical first step towards a more ambitious goal: creating detailed 3D models of structural components for comprehensive damage assessment. The process and vision, as outlined for future work, involved the following:
+**High-Performance Computing:** The immense computational load of 3D reconstruction from images requires significant processing power. The plan was to use the university's high-performance computing (HPC) cluster or dedicated workstations with powerful GPUs to process the hundreds of high-resolution images captured by the MAV.
+
+**Photogrammetry & 3D Modeling:** Using techniques like Structure-from-Motion (SfM) and Multi-View Stereo (MVS), the collection of 2D images from multiple angles around a column can be processed to generate a dense, photorealistic 3D point cloud or mesh model. This process effectively "reverse-engineers" the 3D geometry from the 2D images.
+
+**3D Damage Assessment:** A 3D model unlocks capabilities far beyond 2D image analysis:
+
+    Volumetric Quantification: Precisely measuring the volume of spalled concrete or the length and depth of cracks in 3D space.
+
+    Unobstructed Analysis: Viewing the component from any angle, even after the inspection is complete, allowing for more detailed and collaborative analysis.
+
+    Digital Twin Creation: Generating accurate as-built models of a structure's current condition, which can be used for advanced structural analysis and monitoring over time.
+
+# J. Building a Structured Database:**
 The raw images and video frames were extracted and organized into a structured dataset. As my advisor outlined, this involved moving all the media into a centralized database. 
 This database was meticulously labeled and annotated. Using tools like CVAT, I spent time drawing bounding boxes around instances of damage (spalling, exposed_rebar) in hundreds of images. These included images of the structures that I had taken myself, as well as other images taken by members of the research group who contributed to material testing projects (often seeing cracks, spalls, etc. in the aftermath of their material or structural testing). These images below are directly from the paper and show examples of the labeling that I did. 
 
