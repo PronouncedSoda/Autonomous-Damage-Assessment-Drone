@@ -1,0 +1,9 @@
+#Concept Code
+Concept Code & Algorithm Overview
+While the core implementation code is proprietary, the following Python scripts demonstrate the key logical components and algorithms that powered the system:
+
+01_column_detection.py: Simulates the real-time video processing and bounding box detection that triggered the switch from manual to autopilot mode.
+
+02_autopilot_logic.py: Implements the state machine logic for the autonomous orbital flight and obstacle avoidance behaviors.
+
+04_damage_detection.py: Mocks the process of using a deep learning model for damage inference and fusing the results from multiple viewpoints to determine a final damage state.
