@@ -1,9 +1,137 @@
-#Concept Code
-Concept Code & Algorithm Overview
-While the core implementation code is proprietary, the following Python scripts demonstrate the key logical components and algorithms that powered the system:
+# mav_autopilot.py
+# -*- coding: utf-8 -*-
+"""
+Concept Code: Main Autopilot State Machine for the GCS.
+This illustrates the logic described in the paper's Figure 1.
+"""
 
-01_column_detection.py: Simulates the real-time video processing and bounding box detection that triggered the switch from manual to autopilot mode.
+import time
+import socket
 
-02_autopilot_logic.py: Implements the state machine logic for the autonomous orbital flight and obstacle avoidance behaviors.
+class MAVState:
+    MANUAL = "MANUAL" # Human pilot control
+    APPROACHING = "APPROACHING" # MAV moving towards detected column
+    ORBITING = "ORBITING" # MAV circling the column for inspection
+    AVOIDING = "AVOIDING" # MAV encountering an obstacle
 
-04_damage_detection.py: Mocks the process of using a deep learning model for damage inference and fusing the results from multiple viewpoints to determine a final damage state.
+class MAVController:
+    
+    def __init__(self):
+        self.current_state = MAVState.MANUAL
+        self.orbit_radius = 2.0 # meters, target distance to column
+        self.orbit_angle = 0
+        self.obstacle_detected = False
+        
+        # Setup UDP client to receive data from ESP32 sensor module
+        self.sensor_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sensor_socket.bind(('0.0.0.0', 8888)) # Listen for ESP32 data
+        self.sensor_socket.settimeout(0.1)
+        
+    def receive_sensor_data(self):
+        """Listen for data packet from ESP32 containing LiDAR and ultrasonic readings."""
+        try:
+            data, addr = self.sensor_socket.recvfrom(1024)
+            # Packet format: "F:250,L:120,R:500,B:1000" (Front, Left, Right, Back in cm)
+            sensor_data = dict(item.split(":") for item in data.decode().split(","))
+            return {k: int(v) for k, v in sensor_data.items()}
+        except socket.timeout:
+            return None
+    
+    def manual_control_loop(self):
+        """Simulates the manual pilot phase. Watches video stream for columns."""
+        print("[MAV] In MANUAL mode. Pilot is navigating. Looking for a column...")
+        # In the real code, this would use OpenCV on the live video stream
+        column_detected = self.detect_column_in_frame() # Placeholder for CV model
+        
+        if column_detected:
+            print("[MAV] Column detected! Switching to AUTOPILOT.")
+            self.current_state = MAVState.APPROACHING
+            
+    def approach_column(self, sensor_data):
+        """Autopilot State: Approach the column until at optimal orbit radius."""
+        distance_to_column = sensor_data['F'] / 100.0 # Convert cm to meters
+        
+        if distance_to_column > self.orbit_radius:
+            # Command: Move forward slowly
+            print(f"[MAV] APPROACHING: Moving closer. Current distance: {distance_to_column:.2f}m")
+            # send_command_to_drone("move_forward", 0.1) # Olympe command placeholder
+        else:
+            # Reached optimal distance, begin orbit
+            print(f"[MAV] Reached optimal orbit radius ({self.orbit_radius}m). Starting scan.")
+            self.current_state = MAVState.ORBITING
+            
+    def orbit_and_capture(self, sensor_data):
+        """Autopilot State: Orbit the column and capture images at intervals."""
+        TARGET_ANGLE = 360 # Degrees
+        CAPTURE_INTERVAL = 30 # Take image every 30 degrees
+        
+        # 1. Check for obstacles first (Priority 1)
+        if sensor_data['L'] < 50 or sensor_data['R'] < 50 or sensor_data['B'] < 50:
+            print("[MAV] Obstacle detected during orbit! Engaging AVOIDANCE.")
+            self.current_state = MAVState.AVOIDING
+            return
+            
+        # 2. If no obstacles, continue orbiting
+        # send_command_to_drone("rotate_clockwise", 5) # Rotate 5 degrees
+        self.orbit_angle = (self.orbit_angle + 5) % TARGET_ANGLE
+        print(f"[MAV] ORBITING: Current angle: {self.orbit_angle}°")
+        
+        # 3. Check if it's time to capture an image
+        if self.orbit_angle % CAPTURE_INTERVAL == 0:
+            # send_command_to_drone("capture_high_res_image")
+            print(f"[MAV] Capturing image at {self.orbit_angle}°.")
+            # In the real system, this image would be sent for real-time damage processing.
+            
+        # 4. Check if orbit is complete
+        if self.orbit_angle == 0 and self.orbit_angle != 0:
+            print("[MAV] Orbit complete. 360° scan finished.")
+            self.current_state = MAVState.MANUAL
+            
+    def avoid_obstacle(self, sensor_data):
+        """Autopilot State: Simple obstacle avoidance by reversing direction."""
+        # Simple logic: Reverse the orbit direction for a bit
+        print("[MAV] AVOIDING: Reversing direction to avoid obstacle.")
+        # send_command_to_drone("rotate_counter_clockwise", 60) # Reverse 60 degrees
+        self.orbit_angle = (self.orbit_angle - 60) % 360
+        time.sleep(2) # Simulate maneuvering time
+        # Return to orbiting, hope the path is clear now
+        self.current_state = MAVState.ORBITING 
+        
+    def run(self):
+        """Main loop of the state machine."""
+        print("Starting MAV Control System...")
+        try:
+            while True:
+                # 1. Get latest sensor data from ESP32 module
+                sensor_data = self.receive_sensor_data()
+                
+                # 2. Execute the current state's logic
+                if self.current_state == MAVState.MANUAL:
+                    self.manual_control_loop()
+                    
+                elif self.current_state in [MAVState.APPROACHING, MAVState.ORBITING, MAVState.AVOIDING]:
+                    if sensor_data is None:
+                        print("No sensor data received. Pausing autopilot.")
+                        continue
+                        
+                    if self.current_state == MAVState.APPROACHING:
+                        self.approach_column(sensor_data)
+                    elif self.current_state == MAVState.ORBITING:
+                        self.orbit_and_capture(sensor_data)
+                    elif self.current_state == MAVState.AVOIDING:
+                        self.avoid_obstacle(sensor_data)
+                
+                time.sleep(0.1) # Main loop delay
+                
+        except KeyboardInterrupt:
+            print("\n[MAV] Manual override triggered. Shutting down.")
+
+# --- Placeholder for the actual computer vision function ---
+    def detect_column_in_frame(self):
+        """This would run a YOLO-like model on the video stream."""
+        # Simulating a column being detected every 10th call for demo purposes
+        return True # Placeholder: In reality, this would be the output of a CNN.
+
+if __name__ == "__main__":
+    controller = MAVController()
+    controller.run()
