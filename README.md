@@ -96,7 +96,31 @@ A significant part of my contribution to this project was in stages of data acqu
 **Multi-View Data Acquisition:**
 I manually captured a large set of images and videos of reinforced concrete (RC) columns in our structural laboratory.
 Understanding the limitation of single-viewpoint inspection, I specifically captured data from multiple angles and viewpoints for each column, ensuring comprehensive coverage of all visible surfaces. I sampled 5-7 different concrete columns, and took about 8-9 videos (about 1 minute each, spiraling up and down the columns) and about 200 photos for each one. 
-This included capturing both damaged columns (featuring spalling and exposed rebar) and undamaged ones to provide the models with examples of various conditions. 
+This included capturing both damaged columns (featuring spalling and exposed rebar) and undamaged ones to ensure that the pre-trained model was able to identify damage.
+
+
+**Validating the Pre-Trained Model:**
+The raw images and video frames were extracted and organized into a structured dataset. As my advisor outlined, this involved moving all the media into a centralized database. 
+This database was meticulously labeled and annotated. Using tools like CVAT, I spent time drawing bounding boxes around instances of damage (spalling, exposed_rebar) in hundreds of images. These included images of the structures that I had taken myself, as well as other images taken by members of the research group who contributed to material testing projects (often seeing cracks, spalls, etc. in the aftermath of their material or structural testing). While we did not use these labels to train this model, they would go towards a future model the team would build upon. They were also used as a handy way to compare the pre-trained model's identification of the damage with the human-labeled damage on the images. Below are a few examples of scans I took, minus the labels. You can see that they're all the same column, and these images focused heavily on the damage. These are 3 photos out of many, for this particular column in the Structures Lab.
+
+<img width="300" height="375" alt="image" src="https://github.com/user-attachments/assets/07ee6fda-139b-403b-be99-dc3627ef1710" />
+<img width="302" height="306" alt="image" src="https://github.com/user-attachments/assets/524456f2-3406-4a27-bba4-73c03af9c69a" />
+<img width="300" height="418" alt="image" src="https://github.com/user-attachments/assets/d3f08ab9-af78-4e5e-b205-cc96f32891f2" />
+
+Creating this database with all of these images enabled a rigorous validation protocol, where model performance was measured using standard computer vision metrics such as mean Average Precision (mAP) for damage localization and Intersection over Union (IoU) for segmentation accuracy on our specific structural components. This empirical testing, referenced in the paper's results, was essential to confirm the models' robustness before deployment on the MAV's real-time processing pipeline. This is a fancy way of saying that we fed all of these images to our model, to ensure that it could accurately detect "Rebar Exposure", "Spalling", etc. 
+
+# K. Damage Detection Models
+The computer vision models for damage detection were NOT trained from scratch for this specific project. Instead, we used a learning approach by using pre-trained models that were originally developed and validated in our lab's prior research (cited below). 
+
+Source of Models: The YOLOv2 (for object detection) and DeepLabv3+ (for semantic segmentation) models were adopted from Tavasoli et al., 2023 (cited below) where they were trained on a dedicated dataset of damaged reinforced concrete elements.
+
+Our Contribution: The key innovation of this project was not in creating new models, but in:
+
+- Deploying these proven models for real-time inference on a new, more complex platform (the MAV).
+- Developing the novel multi-view fusion logic that analyzes results from all angles around a column and applies a "worst-case" assessment strategy.
+- Ensuring that the pre-trained model continued to be effective with new samples
+  
+This strategy was essential to overcome the limitations of single-viewpoint analysis and is the core contribution of this paper. This approach allowed us to build upon a solid foundation of existing work and focus our research efforts on the challenging problems of robotics, sensor integration, and automated data collection.
 
 # H1. A Sidebar: 3D Reconstruction
 The multi-view image collection pipeline developed in this project was designed as the critical first step towards a more ambitious goal: creating detailed 3D models of structural components for comprehensive damage assessment. The process and vision, as outlined for future work, involved the following:
@@ -112,13 +136,47 @@ The multi-view image collection pipeline developed in this project was designed 
 
     Digital Twin Creation: Generating accurate as-built models of a structure's current condition, which can be used for advanced structural analysis and monitoring over time.
 
-# J. Building a Structured Database:**
-The raw images and video frames were extracted and organized into a structured dataset. As my advisor outlined, this involved moving all the media into a centralized database. 
-This database was meticulously labeled and annotated. Using tools like CVAT, I spent time drawing bounding boxes around instances of damage (spalling, exposed_rebar) in hundreds of images. These included images of the structures that I had taken myself, as well as other images taken by members of the research group who contributed to material testing projects (often seeing cracks, spalls, etc. in the aftermath of their material or structural testing). These images below are directly from the paper and show examples of the labeling that I did. 
+# J. In-Flight Operation & Real-Time Detection
+Once the validation and setup were complete, the system was deployed for live inspection. The operational workflow during flight was as follows:
 
-<img width="328" height="430" alt="image" src="https://github.com/user-attachments/assets/407e13fd-fecf-404b-bb4d-8f4c8ea910da" />
-<img width="339" height="400" alt="image" src="https://github.com/user-attachments/assets/ab9b4183-624d-4330-9318-1f37bac72f05" />
-<img width="443" height="508" alt="image" src="https://github.com/user-attachments/assets/8e903104-da0b-4468-b43e-36093d0dc078" />
+**Manual Pilot for Navigation:** An operator manually piloted the MAV through the indoor environment using a remote controller. During this phase, the MAV streamed live video back to the ground control station (GCS) laptop.
+
+**Automatic Column Detection:** A real-time computer vision algorithm (e.g., a lightweight object detection model) continuously analyzed the live video stream. Upon detecting a structural column, the system triggered a switch from manual control to autopilot mode.
+
+**Autonomous Orbital Scan:** 
+The MAV autonomously executed a circular flight path around the detected column. During this orbit:
+It used its front-facing LiDAR to maintain a constant distance from the column surface.
+Its side and rear ultrasonic sensors provided 360° obstacle avoidance, causing the MAV to pause and reverse direction upon detecting an impediment. It captured high-resolution images at predefined angular intervals (e.g., every 30 degrees).
+
+**On-the-Fly Damage Analysis:** Each captured image was immediately processed on the GCS laptop using the pre-trained DeepLabv3+ and YOLOv2 models. The system performed real-time inference to identify and localize damage (spalling, exposed rebar) in each frame.
+
+**Multi-View Data Fusion:** The results from all angles were aggregated. The system applied a "worst-case" fusion rule, where the most severe damage classification from any single viewpoint defined the final assessed state of the entire column. This ensured that critical damage occluded from one view would not be missed.
+
+**Return to Manual Control:** After completing a full orbital scan or its path, the MAV automatically switched back to manual pilot mode, allowing the operator to navigate to the next column and repeat the process.
+
+**This seamless integration of real-time navigation, perception, and analysis enabled rapid and comprehensive structural assessment in GPS-denied indoor environments.**
+
+#K. Results & Validation
+To evaluate the system's effectiveness, we tested the complete pipeline on damaged RC columns in a structural laboratory. The algorithm was validated under three challenging scenarios where the column was located:
+
+- In the center of a room.
+- In a corner.
+- In the middle of a wall span.
+
+The MAV successfully navigated around the columns, utilized its sensors to avoid obstacles, and captured comprehensive multi-view image sets. The pre-trained deep learning models subsequently processed these images and accurately identified and localized critical damage features, such as concrete spalling and exposed steel reinforcement, in all test cases. Below are images with labeled captured and identified by our MAV: 
+
+<img width= "187"  height="240" alt="image" src="https://github.com/user-attachments/assets/062532e5-7854-4039-bd03-2bb94a40ce0c" />
+
+<img width= "184" height="231" alt="image" src="https://github.com/user-attachments/assets/389df680-4c8c-40b2-81e1-37c181327ee8" />
+
+<img width="181" height="225" alt="image" src="https://github.com/user-attachments/assets/393f01ca-aa0a-4679-91ac-8c2d87f87308" />
 
 
+#M. Limitations & Future Work
+This project served as a critical proof-of-concept. Based on our findings, we identified key limitations and areas for future development:
 
+**Global Navigation:** The current system requires a human operator for global pathfinding. Future work involves integration with advanced SLAM algorithms for fully autonomous navigation throughout entire buildings.
+
+**3D Damage Assessment:** Our assessment is based on 2D images. We are actively exploring vision-based 3D reconstruction techniques to create dense point clouds of components, enabling true 3D volumetric damage quantification.
+
+**Multi-Agent Systems:** The MAV cannot operate behind closed doors. A promising future direction is developing a collaborative scheme between MAVs and Unmanned Ground Vehicles (UGVs), where a UGV could open doors and serve as a mobile charging station for the MAV.
