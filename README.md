@@ -172,7 +172,7 @@ The MAV successfully navigated around the columns, utilized its sensors to avoid
 <img width="181" height="225" alt="image" src="https://github.com/user-attachments/assets/393f01ca-aa0a-4679-91ac-8c2d87f87308" />
 
 
-#M. Limitations & Future Work
+# M. Limitations & Future Work
 This project served as a critical proof-of-concept. Based on our findings, we identified key limitations and areas for future development:
 
 **Global Navigation:** The current system requires a human operator for global pathfinding. Future work involves integration with advanced SLAM algorithms for fully autonomous navigation throughout entire buildings.
