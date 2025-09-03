@@ -8,10 +8,11 @@ This is a project that I contributed to in my 2nd year of University. I was a pa
 <img width="1010" height="622" alt="image" src="https://github.com/user-attachments/assets/e9260e06-1209-46f5-a442-7ec4186c828e" />
 
 # B. Disclaimer
-Please note: This repository serves to showcase the research work and design of the Semi-Autonomous MAV. As such, I am unable to show the original code used for the MAV or the process of modifying the drone, but have included snippets of example code that serves the same concept and/or purpose. Please contact the authors for inquiries regarding implementation details.
+Please note: This repository serves to **showcase** the research work and design of the Semi-Autonomous MAV. It is not meant to be a repository to serve as a toolkit to perfectly replicate the project. 
+As such, I am unable to show the original code used for the MAV or the process of modifying the drone, but have included snippets of example code that serves the same concept and/or purpose. I have also outlined the steps and hardware requirements for the drone modifications. Please contact the authors for inquiries regarding implementation details.
 
 # C. Overview
-This project presents a novel, semi-autonomous pipeline for the rapid post-earthquake inspection of reinforced concrete (RC) columns using a custom-equipped, low-cost Micro Aerial Vehicle (MAV). The system helps automate structura damage assessment by combining real-time column detection, multi-view image acquisition, and computer vision for damage assessment. It aims to go beyond the limitations of single-viewpoint inspections.
+This project presents a novel, semi-autonomous pipeline for the rapid post-earthquake inspection of reinforced concrete (RC) columns using a custom-equipped, low-cost Micro Aerial Vehicle (MAV). The system helps automate structural damage assessment by combining real-time column detection, multi-view image acquisition, and computer vision for damage assessment. It aims to go beyond the limitations of single-viewpoint inspections.
 Key Features
 1) Semi-Autonomous Navigation: The MAV operates in manual mode for global navigation and switches to an autopilot mode upon detecting a column for localized inspection.
 2) Multi-View Data Collection: The MAV autonomously performs a circular flight path around a detected column, capturing high-resolution images from multiple viewpoints to ensure comprehensive coverage.
