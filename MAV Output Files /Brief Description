@@ -1,0 +1,4 @@
+# A quick description of the MAV Output files
+These photos, as you will can see, are actual results outputted by our MAV using the pre-trained model described in the README. 
+These scanned columns all contain structural damage - spalling and rebar have been highlighted in particular. The type of damage has been
+identified by the pretrained model, boxed, and labeled in yellow. 
