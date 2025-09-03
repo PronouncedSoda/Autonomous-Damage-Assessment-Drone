@@ -1,1 +1,8 @@
+A Brief Description of the MAV Output Files
+As you can see, this folder contains a series of photos with structural columns and labeled damage. 
+These photos are the outputs from the scans conducted by the MAV, and the damage identified by the pretrained model.
+The photos contain exactly the following: 
+- The scanned structural column in the lab (with damage)
+- The area of damage highlighted and covered in white
+- The labels identifying the damage (as done by the pretrained model)
 
